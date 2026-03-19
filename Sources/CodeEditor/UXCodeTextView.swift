@@ -256,13 +256,22 @@ final class UXCodeTextView: UXTextView {
   func applyNewTheme(_ newTheme: CodeEditor.ThemeName? = nil,
                      andFontSize newSize: CGFloat) -> Bool
   {
+    let resolvedTheme = newTheme ?? themeName
+
+    // Skip expensive setTheme reload when neither theme nor font size changed.
+    if resolvedTheme == themeName,
+       let existingFont = highlightr?.theme?.codeFont,
+       existingFont.pointSize == newSize {
+      return true
+    }
+
     // Setting the theme reloads it (i.e. makes a "copy").
     guard let highlightr = highlightr,
-          highlightr.setTheme(to: (newTheme ?? themeName).rawValue),
+          highlightr.setTheme(to: resolvedTheme.rawValue),
           let theme      = highlightr.theme else { return false }
-    
+
     guard theme.codeFont?.pointSize != newSize else { return true }
-    
+
     theme.codeFont       = theme.codeFont?      .withSize(newSize)
     theme.boldCodeFont   = theme.boldCodeFont?  .withSize(newSize)
     theme.italicCodeFont = theme.italicCodeFont?.withSize(newSize)
