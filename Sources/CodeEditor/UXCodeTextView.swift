@@ -58,6 +58,7 @@ final class UXCodeTextView: UXTextView {
   }
   private(set) var themeName = CodeEditor.ThemeName.default {
     didSet {
+      guard themeName != oldValue else { return }
       highlightr?.setTheme(to: themeName.rawValue)
       if let font = highlightr?.theme?.codeFont { self.font = font }
     }
@@ -247,6 +248,7 @@ final class UXCodeTextView: UXTextView {
     guard let highlightr = highlightr,
           highlightr.setTheme(to: newTheme.rawValue),
           let theme      = highlightr.theme else { return false }
+    themeName = newTheme
     self.backgroundColor = customBackgroundColor ?? theme.themeBackgroundColor
     if let font = theme.codeFont, font !== self.font { self.font = font }
     return true
@@ -257,9 +259,10 @@ final class UXCodeTextView: UXTextView {
                      andFontSize newSize: CGFloat) -> Bool
   {
     let resolvedTheme = newTheme ?? themeName
+    let themeChanged = resolvedTheme != themeName
 
     // Skip expensive setTheme reload when neither theme nor font size changed.
-    if resolvedTheme == themeName,
+    if !themeChanged,
        let existingFont = highlightr?.theme?.codeFont,
        existingFont.pointSize == newSize {
       return true
@@ -269,6 +272,8 @@ final class UXCodeTextView: UXTextView {
     guard let highlightr = highlightr,
           highlightr.setTheme(to: resolvedTheme.rawValue),
           let theme      = highlightr.theme else { return false }
+
+    if themeChanged { themeName = resolvedTheme }
 
     guard theme.codeFont?.pointSize != newSize else { return true }
 
